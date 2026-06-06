@@ -10,22 +10,23 @@ describe('createManifest', () => {
     expect(manifest.types).toContain('series');
   });
 
-  it('includes config for TMDB API key', () => {
-    const manifest = createManifest();
-    expect(manifest.behaviorHints?.configurable).toBe(true);
-    expect(manifest.config?.length).toBeGreaterThan(0);
-    expect(manifest.config![0].key).toBe('tmdbApiKey');
-  });
-
-  it('registers catalog resources', () => {
+  it('registers 6 catalog resources', () => {
     const manifest = createManifest();
     const catalogs = manifest.catalogs;
     expect(catalogs).toBeDefined();
     expect(catalogs!.length).toBeGreaterThanOrEqual(6);
   });
 
-  it('includes meta resource', () => {
+  it('includes catalog and meta resources but not search', () => {
     const manifest = createManifest();
+    expect(manifest.resources).toContain('catalog');
     expect(manifest.resources).toContain('meta');
+    expect(manifest.resources).not.toContain('search');
+  });
+
+  it('has no config section', () => {
+    const manifest = createManifest();
+    expect('config' in manifest).toBe(false);
+    expect('behaviorHints' in manifest).toBe(false);
   });
 });
