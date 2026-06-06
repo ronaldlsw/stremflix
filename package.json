@@ -1,0 +1,22 @@
+{
+  "name": "stremio-addon-netflix-listings",
+  "version": "0.1.0",
+  "description": "Stremio addon providing Netflix listings via TMDB API",
+  "type": "module",
+  "scripts": {
+    "build": "npm run typecheck && npm test && node scripts/build.mjs",
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "dev": "esbuild src/addon.ts --bundle --platform=browser --outfile=dist/addon.bundle.js --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.0",
+    "typescript": "^5.5.0",
+    "@types/jest": "^29.5.0"
+  },
+  "dependencies": {
+    "stremio-addon-sdk": "1.1.x"
+  }
+}
