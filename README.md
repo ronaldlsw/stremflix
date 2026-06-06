@@ -5,22 +5,15 @@ Browse Netflix movies and series directly in [Stremio](https://www.stremio.com/)
 ## Features
 
 - **6 catalogs:** Trending Movies, Trending Series, New Movies, New Series, Popular Movies, Popular Series
-- **Search** across Netflix titles
 - **Metadata** with poster, synopsis, cast, genres, ratings
-- **Configurable** — enter your own TMDB API key when adding the addon
 - **Works with AIOStream/TorrentIO** — uses IMDb IDs for automatic stream matching
-
-## Prerequisites
-
-- A free [TMDB API key](https://www.themoviedb.org/signup) (get one at TMDB → Settings → API)
+- **Daily refresh** — GitHub Actions fetches fresh TMDB data every day
 
 ## Adding to Stremio
 
 1. **Open Stremio**
 2. **Addons** → **Add from URL**
-3. Enter: `https://<your-username>.github.io/netflix-listings/`
-4. Paste your **TMDB API Key** when prompted
-5. Browse the Netflix catalogs
+3. Enter: `https://ronaldlsw.github.io/stremflix/manifest.json`
 
 Streams will be provided automatically by other addons you have installed (AIOStream, TorrentIO, etc.).
 
@@ -28,30 +21,43 @@ Streams will be provided automatically by other addons you have installed (AIOSt
 
 ```bash
 npm install
-npm run dev       # Watch mode build
-npm test          # Run tests
-npm run build     # Full build (typecheck → test → bundle)
+TMDB_API_KEY=your_key node scripts/build.mjs   # Build with live TMDB data
+npm test                                         # Run tests
 ```
 
-## Deploy to GitHub Pages
+## Deployment
 
-1. Create a GitHub repository and push:
-   ```bash
-   git remote add origin https://github.com/<username>/netflix-listings.git
-   git push -u origin master
-   ```
-2. In GitHub repo **Settings → Pages**, set source to **GitHub Actions**
-3. On every push to `master`, GitHub Actions runs tests, builds, and deploys
+This addon uses **pre-built static files** deployed to GitHub Pages. A GitHub Actions workflow:
+
+- Runs **daily at 6AM UTC** (`cron: 0 6 * * *`)
+- Runs on **every push** to `master`
+- Fetches live TMDB data, generates static catalog/meta JSON files
+- Deploys to GitHub Pages
+
+**Setup:**
+1. Add your TMDB API key as a GitHub Secret named `TMDB_API_KEY` in your repo settings
+2. GitHub Actions handles the rest
 
 ## Architecture
 
-The addon runs client-side in Stremio's internal runtime. It makes direct TMDB API calls using the user's API key. Catalog and metadata are fetched live — no pre-built data files.
+Data is pre-built at deploy time, not fetched live. GitHub Actions generates all catalog and meta JSON files using the TMDB API, then publishes them as static files.
 
-- `src/addon.ts` — Defines catalog, meta, and search handlers
+```
+GitHub Actions (daily + on push)
+  └─┬─ Fetches TMDB data with API key from Secrets
+    ├─ Generates catalog/*.json
+    ├─ Generates meta/*.json
+    └─ Deploys to GitHub Pages
+         │
+Stremio fetches pre-built JSON directly from GitHub Pages
+```
+
+- `src/addon.ts` — Defines catalog and meta handlers
 - `src/tmdb.ts` — TMDB API client wrapper
-- `src/catalogs.ts` — Catalog configurations (extensible array — add more by appending)
+- `src/catalogs.ts` — Catalog configurations (extensible array)
+- `scripts/build.mjs` — Build script that fetches TMDB and generates static files
 - `dist/` — Build output deployed to GitHub Pages
 
 ## Tech Stack
 
-TypeScript, stremio-addon-sdk, TMDB API, Jest, esbuild, GitHub Actions
+TypeScript, stremio-addon-sdk, TMDB API, Jest, esbuild, GitHub Actions, GitHub Pages
