@@ -5,6 +5,10 @@ import { TMDBClient } from './tmdb';
 import type { AddonConfig, ContentType, CatalogResponse, MetaResponse } from './types';
 import type { TMDBMovieDetail, TMDBTVDetail } from './types';
 
+function toTMDBType(type: string): 'movie' | 'tv' {
+  return type === 'series' ? 'tv' : 'movie';
+}
+
 export function createAddonInterface() {
   const manifest = createManifest();
   const builder = new addonBuilder(manifest);
@@ -22,14 +26,15 @@ export function createAddonInterface() {
     }
 
     const page = parseInt(extra?.page as string, 10) || 1;
+    const tmdbType = toTMDBType(type);
 
     try {
       let results;
 
       if (catalog.tmdbEndpoint.startsWith('/trending')) {
-        results = await client.trending(type as 'movie' | 'tv', page);
+        results = await client.trending(tmdbType, page);
       } else if (extra?.search) {
-        results = await client.search(type as 'movie' | 'tv', extra.search as string);
+        results = await client.search(tmdbType, extra.search as string);
       } else {
         const params: Record<string, string | number> = {
           ...catalog.discoverParams,
@@ -38,7 +43,7 @@ export function createAddonInterface() {
         if (catalog.sortBy) {
           params.sort_by = catalog.sortBy;
         }
-        results = await client.discover(type as 'movie' | 'tv', params);
+        results = await client.discover(tmdbType, params);
       }
 
       const metas = results.map(r => mapTMDBResultToCatalogItem(r, type as ContentType));
@@ -62,20 +67,27 @@ export function createAddonInterface() {
 
     const client = new TMDBClient(config.tmdbApiKey);
     const tmdbId = parseInt(id.replace('tmdb:', ''), 10);
+    const tmdbType = toTMDBType(type);
+    const isMovie = type === 'movie';
 
     try {
-      const detail = (await client.details(type as 'movie' | 'tv', tmdbId)) as
+      const detail = (await client.details(tmdbType, tmdbId)) as
         | TMDBMovieDetail
         | TMDBTVDetail;
 
-      const isMovie = type === 'movie';
       const movieDetail = detail as TMDBMovieDetail;
       const tvDetail = detail as TMDBTVDetail;
 
-      const externalIDs = await client.getExternalIDs(type as 'movie' | 'tv', tmdbId);
+      let imdbId: string | null = null;
+      try {
+        const externalIDs = await client.getExternalIDs(tmdbType, tmdbId);
+        imdbId = externalIDs.imdb_id;
+      } catch {
+        // External ID lookup is non-critical
+      }
 
       const meta: MetaResponse['meta'] = {
-        id: externalIDs.imdb_id || `tmdb:${tmdbId}`,
+        id: imdbId || `tmdb:${tmdbId}`,
         type: type as ContentType,
         name: isMovie ? movieDetail.title : tvDetail.name,
         poster: detail.poster_path
@@ -112,9 +124,10 @@ export function createAddonInterface() {
     }
 
     const client = new TMDBClient(config.tmdbApiKey);
+    const tmdbType = toTMDBType(type);
 
     try {
-      const results = await client.search(type as 'movie' | 'tv', search);
+      const results = await client.search(tmdbType, search);
       const metas = results.map(r => mapTMDBResultToCatalogItem(r, type as ContentType));
       return { metas, cacheMaxAge: 3600 };
     } catch {
