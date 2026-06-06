@@ -3,7 +3,9 @@ import {
   mockTrendingMoviesResponse,
   mockTrendingTVResponse,
   mockExternalIDsResponse,
+  mockNullExternalIDsResponse,
   mockMovieDetailResponse,
+  mockTVDetailResponse,
   mockDiscoverResponse,
 } from './fixtures/tmdb-responses';
 
@@ -94,6 +96,29 @@ describe('TMDBClient', () => {
         'https://api.themoviedb.org/3/movie/550/external_ids?api_key=test-api-key'
       );
     });
+
+    it('returns external IDs for TV', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockExternalIDsResponse),
+      });
+
+      const result = await client.getExternalIDs('tv', 1399);
+      expect(result).toEqual(mockExternalIDsResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.themoviedb.org/3/tv/1399/external_ids?api_key=test-api-key'
+      );
+    });
+
+    it('handles null imdb_id', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockNullExternalIDsResponse),
+      });
+
+      const result = await client.getExternalIDs('movie', 1);
+      expect(result.imdb_id).toBeNull();
+    });
   });
 
   describe('details', () => {
@@ -109,6 +134,19 @@ describe('TMDBClient', () => {
         expect.stringContaining('/movie/550')
       );
     });
+
+    it('returns TV details', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTVDetailResponse),
+      });
+
+      const result = await client.details('tv', 1399);
+      expect(result).toEqual(mockTVDetailResponse);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/tv/1399')
+      );
+    });
   });
 
   describe('search', () => {
@@ -122,6 +160,19 @@ describe('TMDBClient', () => {
       expect(result).toEqual(mockTrendingMoviesResponse.results);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('query=Fight+Club')
+      );
+    });
+
+    it('searches TV with query', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockTrendingTVResponse),
+      });
+
+      const result = await client.search('tv', 'Game of Thrones');
+      expect(result).toEqual(mockTrendingTVResponse.results);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('search/tv')
       );
     });
   });

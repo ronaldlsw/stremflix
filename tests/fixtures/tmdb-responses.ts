@@ -54,6 +54,26 @@ export const mockMovieDetailResponse = {
   },
 };
 
+export const mockTVDetailResponse = {
+  id: 1399,
+  name: "Game of Thrones",
+  poster_path: "/u3bZgnGQ9T01sWNBdA7o7rWYKLb.jpg",
+  backdrop_path: "/suopoADq0kQQYZzEkChWj7Wiw7O.jpg",
+  first_air_date: "2011-04-17",
+  vote_average: 8.4,
+  overview: "Seven noble families...",
+  episode_run_time: [60],
+  genres: [{ id: 18, name: "Drama" }, { id: 10765, name: "Sci-Fi & Fantasy" }],
+  credits: {
+    cast: [{ name: "Emilia Clarke" }, { name: "Kit Harington" }],
+    crew: [{ name: "David Benioff", job: "Showrunner" }, { name: "Miguel Sapochnik", job: "Director" }],
+  },
+};
+
+export const mockNullExternalIDsResponse = {
+  imdb_id: null,
+};
+
 export const mockDiscoverResponse = {
   results: [mockTrendingMoviesResponse.results[0]],
   page: 1,
